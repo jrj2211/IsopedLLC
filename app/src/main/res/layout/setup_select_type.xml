@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/setupSelectType"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="bottom"
+    android:layout_marginBottom="25dp"
+    android:layout_marginLeft="25dp"
+    android:layout_marginRight="25dp"
+    android:orientation="vertical">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="15dp"
+        android:fontFamily="sans-serif"
+        android:gravity="center"
+        android:text="Select how will this device be used"
+        android:textColor="@color/white"
+        android:textSize="15sp" />
+
+    <Button
+        android:id="@+id/professionalButton"
+        android:layout_width="match_parent"
+        android:layout_height="85dp"
+        android:layout_marginBottom="30dp"
+        android:background="@color/tinted20"
+        android:fontFamily="sans-serif-light"
+        android:gravity="center"
+        android:text="Professional"
+        android:textColor="@color/white"
+        android:textSize="22sp" />
+
+    <Button
+        android:id="@+id/personalButton"
+        android:layout_width="match_parent"
+        android:layout_height="85dp"
+        android:background="@color/tinted20"
+        android:fontFamily="sans-serif-light"
+        android:gravity="center"
+        android:text="Home Use"
+        android:textColor="@color/white"
+        android:textSize="22sp" />
+
+</LinearLayout>

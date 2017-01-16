@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#3693b6</color>
+    <color name="colorPrimaryDark">#2a84a6</color>
+    <color name="colorAccent">#cc2e50</color>
+    <color name='white'>#FFFFFF</color>
+    <color name='tinted20'>#33000000</color>
+    <color name='lightGray'>#dcdcdc</color>
+    <color name='mediumGray'>#757575</color>
+    <color name='darkGray'>#202020</color>
+
+    <color name='assistance'>#4dac33</color>
+    <color name='resistance'>#cc2e50</color>
+</resources>

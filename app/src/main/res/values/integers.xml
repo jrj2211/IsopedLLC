@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="level_max">10</integer>
+    <integer name="level_min">0</integer>
+
+    <integer name="permissionCourseLocation">300</integer>
+</resources>

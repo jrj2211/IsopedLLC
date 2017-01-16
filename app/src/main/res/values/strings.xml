@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">ISOPED</string>
+    <string name="app_slogan">Assembled in the USA</string>
+    <string name='font_quantify'>fonts/Quantify-Bold.ttf</string>
+</resources>

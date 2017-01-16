@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/menu_pin"
+        android:icon="@drawable/ic_pin_white"
+        android:orderInCategory="100"
+        android:title="Pin"
+        app:showAsAction="always" />
+
+</menu>

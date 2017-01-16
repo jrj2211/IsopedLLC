@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/drawer_device_control"
+            android:icon="@drawable/ic_feet_gray46"
+            android:title="Control Device" />
+
+        <item
+            android:id="@+id/drawer_progress"
+            android:icon="@drawable/ic_progress_gray46"
+            android:title="My Progress" />
+
+        <item
+            android:id="@+id/drawer_switch_user"
+            android:icon="@drawable/ic_switchuser_gray46"
+            android:title="Switch User" />
+
+        <item
+            android:id="@+id/drawer_devices"
+            android:icon="@drawable/ic_bluetooth_gray46"
+            android:title="Devices" />
+
+        <item
+            android:id="@+id/drawer_settings"
+            android:icon="@drawable/ic_settings_gray46"
+            android:title="Settings" />
+
+        <item
+            android:id="@+id/drawer_help"
+            android:icon="@drawable/ic_help_gray46"
+            android:title="Help" />
+    </group>
+
+</menu>
