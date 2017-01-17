@@ -76,9 +76,6 @@ public class MainActivity extends AppCompatActivity {
             case R.id.drawer_user_list:
                 BaseFragment.startFragment(this, new UserListFragment());
                 break;
-            case R.id.drawer_profile:
-                BaseFragment.startFragment(this, new ProfileFragment());
-                break;
             case R.id.drawer_device_control:
                 BaseFragment.startFragment(this, new DeviceControlFragment());
                 break;

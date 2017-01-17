@@ -2,6 +2,7 @@ package com.ravensclaw.isoped.isoped.fragments;
 
 import android.database.Cursor;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +13,7 @@ import android.widget.TextView;
 import com.ravensclaw.isoped.isoped.R;
 import com.ravensclaw.isoped.isoped.database.DbHelper;
 import com.ravensclaw.isoped.isoped.database.User;
+import com.ravensclaw.isoped.isoped.dialogs.ProfileDialog;
 import com.ravensclaw.isoped.isoped.fragments.usermode.DeviceControlFragment;
 import com.ravensclaw.isoped.isoped.helpers.AppSettings;
 
@@ -31,9 +33,13 @@ public class UserListFragment extends BaseFragment {
 
     private View.OnClickListener selectUserListener = new View.OnClickListener() {
         public void onClick(View v) {
-            // Get the user ID
-            settings.setUser((Long) v.getTag());
-            BaseFragment.startFragment(getActivity(), new DeviceControlFragment());
+            if (settings.isType(AppSettings.TYPES.PROFESSIONAL)) {
+                ProfileDialog dialog = new ProfileDialog((AppCompatActivity) getActivity(), (Long) v.getTag());
+                dialog.show();
+            } else {
+                settings.setUser((Long) v.getTag());
+                BaseFragment.startFragment(getActivity(), new DeviceControlFragment());
+            }
         }
     };
 
