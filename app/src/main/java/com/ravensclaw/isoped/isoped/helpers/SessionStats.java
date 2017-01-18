@@ -1,11 +1,11 @@
 package com.ravensclaw.isoped.isoped.helpers;
 
-import android.content.Context;
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Handler;
 import android.support.v4.content.ContextCompat;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -21,11 +21,14 @@ public class SessionStats {
 
     private Handler mHandler;
     private int delay = 100;
-    private STATE curState = STATE.STOPPED;
-    private View stats;
     private int curTime = 0;
     private int curCycles = 0;
-    private Context context;
+    private STATE curState = STATE.STOPPED;
+    private Activity activity;
+    private TextView timerView;
+    private TextView cyclesView;
+    private Button sessionButton;
+    private Button resetButton;
     private Runnable mRunnable = new Runnable() {
         @Override
         public void run() {
@@ -38,42 +41,28 @@ public class SessionStats {
                 if (curTime % 1000 == 0) {
                     Random r = new Random();
                     if (r.nextBoolean()) {
-                        incrementCycles();
+                        setCycles(1, true);
                     }
                 }
             }
         }
     };
 
-    public SessionStats(ViewGroup container, LayoutInflater inflater, String label) {
-        stats = inflater.inflate(R.layout.session_stats, null);
-        container.addView(stats);
-
-        context = inflater.getContext();
-
+    public SessionStats(Activity a) {
+        activity = a;
         mHandler = new Handler();
 
         reset();
-
-        setLabel(label);
-
-        stats.findViewById(R.id.session_button).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                toggle();
-            }
-        });
-
-        stats.findViewById(R.id.session_reset).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                reset();
-            }
-        });
     }
 
-    public void setLabel(String label) {
-        ((TextView) stats.findViewById(R.id.timer_label)).setText(label);
+    public SessionStats setTimerView(TextView view) {
+        timerView = view;
+        return this;
+    }
+
+    public SessionStats setCyclesView(TextView view) {
+        cyclesView = view;
+        return this;
     }
 
     public void start() {
@@ -111,21 +100,60 @@ public class SessionStats {
     public void reset() {
         stop();
         setTime(0);
-        setCycles(0);
+        setCycles(0, false);
     }
 
-    public void setCycles(int cycles) {
-        curCycles = cycles;
-        ((TextView) stats.findViewById(R.id.cycles)).setText(Integer.toString(cycles) + " cycles");
+    public void setCycles(int cycles, boolean increment) {
+        if (increment) {
+            curCycles += cycles;
+        } else {
+            curCycles = cycles;
+        }
+
+        if (cyclesView != null) {
+            cyclesView.setText(Integer.toString(curCycles));
+        }
     }
 
-    public void incrementCycles() {
-        setCycles(curCycles + 1);
+    public void setSessionButton(Button button) {
+        sessionButton = button;
+
+        sessionButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                toggle();
+            }
+        });
+    }
+
+    public void setResetButton(Button button) {
+        resetButton = button;
+
+        resetButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new AlertDialog.Builder(activity)
+                        .setIcon(R.drawable.ic_error)
+                        .setTitle("Reset Session")
+                        .setMessage("Are you sure you want to stop the session?")
+                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                reset();
+                            }
+
+                        })
+                        .setNegativeButton("No", null)
+                        .show();
+            }
+        });
     }
 
     private void setTime(int ms) {
-        curTime = ms;
-        ((TextView) stats.findViewById(R.id.timer_value)).setText(formatTime(curTime));
+        if (timerView != null) {
+            curTime = ms;
+            timerView.setText(formatTime(curTime));
+        }
     }
 
     private String formatTime(int ms) {
@@ -133,28 +161,21 @@ public class SessionStats {
         long minutes = (ms / (1000 * 60)) % 60;
         long hours = (ms / (1000 * 60 * 60)) % 24;
 
-        String time = "";
-        if (hours > 0) {
-            time += Long.toString(hours) + "h ";
-        }
-
-        time += Long.toString(minutes) + "m ";
-
-        time += Long.toString(seconds) + "s ";
-
-        return time;
+        return String.format("%02d:%02d:%02d", hours, minutes, seconds);
     }
 
     private void updateButtons() {
-        if (curState == STATE.RUNNING) {
-            ((Button) stats.findViewById(R.id.session_button)).setText("PAUSE SESSION");
-            ((Button) stats.findViewById(R.id.session_button)).setBackgroundColor(ContextCompat.getColor(context, R.color.resistance));
-        } else if (curState == STATE.STOPPED) {
-            ((Button) stats.findViewById(R.id.session_button)).setText("START SESSION");
-            ((Button) stats.findViewById(R.id.session_button)).setBackgroundColor(ContextCompat.getColor(context, R.color.assistance));
-        } else if (curState == STATE.PAUSED) {
-            ((Button) stats.findViewById(R.id.session_button)).setText("RESUME SESSION");
-            ((Button) stats.findViewById(R.id.session_button)).setBackgroundColor(ContextCompat.getColor(context, R.color.assistance));
+        if (sessionButton != null) {
+            if (curState == STATE.RUNNING) {
+                sessionButton.setText("PAUSE SESSION");
+                sessionButton.setBackgroundColor(ContextCompat.getColor(activity, R.color.resistance));
+            } else if (curState == STATE.STOPPED) {
+                sessionButton.setText("START SESSION");
+                sessionButton.setBackgroundColor(ContextCompat.getColor(activity, R.color.assistance));
+            } else if (curState == STATE.PAUSED) {
+                sessionButton.setText("RESUME SESSION");
+                sessionButton.setBackgroundColor(ContextCompat.getColor(activity, R.color.assistance));
+            }
         }
     }
 

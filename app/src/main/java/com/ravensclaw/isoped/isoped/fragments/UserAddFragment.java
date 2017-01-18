@@ -6,6 +6,9 @@ import android.os.Bundle;
 import android.support.design.widget.TextInputLayout;
 import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -19,9 +22,15 @@ import com.ravensclaw.isoped.isoped.database.User;
 
 public class UserAddFragment extends BaseFragment {
 
+    private User user = null;
+
     @Override
     public String getTitle() {
-        return "Add New User";
+        if (user != null) {
+            return "Edit User";
+        } else {
+            return "Add New User";
+        }
     }
 
     @Override
@@ -30,7 +39,12 @@ public class UserAddFragment extends BaseFragment {
     }
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstance) {
+        Bundle args = getArguments();
+        user = new User(getActivity(), args.getLong("uid"));
+
         super.onCreate(savedInstance);
+
+        setHasOptionsMenu(true);
 
         rootView = inflater.inflate(R.layout.user_add, container, false);
 
@@ -42,6 +56,26 @@ public class UserAddFragment extends BaseFragment {
         });
 
         return rootView;
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        if (user != null) {
+            inflater.inflate(R.menu.delete_menu, menu);
+            super.onCreateOptionsMenu(menu, inflater);
+        }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        switch (id) {
+            case R.id.menu_delete:
+                super.popBackStack();
+                return true;
+        }
+
+        return false;
     }
 
     private void submit() {

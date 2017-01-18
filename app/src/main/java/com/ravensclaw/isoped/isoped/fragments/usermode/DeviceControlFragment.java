@@ -6,13 +6,16 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TableLayout;
 import android.widget.TextView;
 
 import com.ravensclaw.isoped.isoped.R;
 import com.ravensclaw.isoped.isoped.database.User;
+import com.ravensclaw.isoped.isoped.dialogs.NumberPickerDialog;
 import com.ravensclaw.isoped.isoped.fragments.BaseFragment;
 import com.ravensclaw.isoped.isoped.helpers.AppSettings;
-import com.ravensclaw.isoped.isoped.helpers.NumberPicker;
+import com.ravensclaw.isoped.isoped.helpers.CustomCallback;
+import com.ravensclaw.isoped.isoped.helpers.DeviceInfoRow;
 import com.ravensclaw.isoped.isoped.helpers.SessionStats;
 
 /**
@@ -23,12 +26,9 @@ public class DeviceControlFragment extends BaseFragment {
 
     private Button modeResistance;
     private Button modeAssistance;
-    private TextView levelDisplay;
-    private int currentLevel = 0;
     private User user = null;
     private String title = "ISOPED";
-    private SessionStats assistanceSession;
-    private SessionStats resistanceSession;
+    private LayoutInflater inflater;
     private View.OnClickListener selectModeListener = new View.OnClickListener() {
         public void onClick(View v) {
             switch (v.getId()) {
@@ -69,25 +69,12 @@ public class DeviceControlFragment extends BaseFragment {
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstance) {
         super.onCreate(savedInstance);
+        this.inflater = inflater;
+        rootView = inflater.inflate(R.layout.device_control, container, false);
 
         settings = AppSettings.getInstance(getActivity());
 
-        rootView = inflater.inflate(R.layout.device_control, container, false);
-
         setHasOptionsMenu(true);
-
-        // Setup the header mode buttons
-        modeAssistance = (Button) rootView.findViewById(R.id.mode_assistance);
-        modeResistance = (Button) rootView.findViewById(R.id.mode_resistance);
-        modeAssistance.setOnClickListener(selectModeListener);
-        modeResistance.setOnClickListener(selectModeListener);
-
-        // Create all the views
-        setupAssistanceMode();
-        setupResistanceMode();
-
-        // Default to assistance mode
-        selectMode(MODE.ASSISTANCE);
 
         // Load the user if they exist
         if (settings.getUser() != -1) {
@@ -95,36 +82,31 @@ public class DeviceControlFragment extends BaseFragment {
             title = user.getFullName();
         }
 
+        // Setup the header mode buttons
+        modeAssistance = (Button) rootView.findViewById(R.id.mode_assistance);
+        modeResistance = (Button) rootView.findViewById(R.id.mode_resistance);
+        modeAssistance.setOnClickListener(selectModeListener);
+        modeResistance.setOnClickListener(selectModeListener);
+
+        ViewGroup stats = (ViewGroup) rootView.findViewById(R.id.stats);
+
+        selectMode(MODE.ASSISTANCE);
+
+        SessionStats sessionStats = new SessionStats(getActivity());
+        sessionStats.setCyclesView((TextView) rootView.findViewById(R.id.session_cycles));
+        sessionStats.setTimerView((TextView) rootView.findViewById(R.id.session_time));
+        sessionStats.setSessionButton((Button) rootView.findViewById(R.id.session_button));
+        sessionStats.setResetButton((Button) rootView.findViewById(R.id.session_reset));
+        sessionStats.reset();
+
         return rootView;
     }
 
-    public void setupAssistanceMode() {
-        ViewGroup options = (ViewGroup) rootView.findViewById(R.id.assistance_options);
-        NumberPicker resistance = new NumberPicker(options, getActivity().getLayoutInflater(), "Move Speed (0-10)", 0, 10);
-        resistance.setValue(0);
-
-        NumberPicker moveDistance = new NumberPicker(options, getActivity().getLayoutInflater(), "Stride Length (0-15)", 0, 15);
-        moveDistance.setIncrement(1);
-        moveDistance.setUnits(" inches", " inch");
-        moveDistance.setValue(0);
-
-        assistanceSession = new SessionStats(options, getActivity().getLayoutInflater(), "Assistance Session");
-    }
-
-    public void setupResistanceMode() {
-        ViewGroup options = (ViewGroup) rootView.findViewById(R.id.resistance_options);
-        NumberPicker resistance = new NumberPicker(options, getActivity().getLayoutInflater(), "Resistance Level (0-10)", 0, 10);
-        resistance.setValue(0);
-
-        NumberPicker moveDistance = new NumberPicker(options, getActivity().getLayoutInflater(), "Stride Length (0-15)", 0, 15);
-        moveDistance.setIncrement(1);
-        moveDistance.setUnits(" inches", " inch");
-        moveDistance.setValue(0);
-
-        resistanceSession = new SessionStats(options, getActivity().getLayoutInflater(), "Resistance Session");
-    }
-
     private void selectMode(MODE mode) {
+
+        TableLayout stats = (TableLayout) rootView.findViewById(R.id.stats);
+        stats.removeAllViews();
+
         if (mode == MODE.ASSISTANCE) {
             // Set the button colors
             modeAssistance.setBackgroundResource(R.drawable.mode_assistance_button);
@@ -132,9 +114,25 @@ public class DeviceControlFragment extends BaseFragment {
             modeResistance.setTextColor(ContextCompat.getColor(getActivity(), R.color.darkGray));
             modeResistance.setBackgroundResource(0);
 
-            // Show the right container
-            rootView.findViewById(R.id.assistance_options).setVisibility(View.VISIBLE);
-            rootView.findViewById(R.id.resistance_options).setVisibility(View.GONE);
+            final DeviceInfoRow moveSpeed = new DeviceInfoRow(stats, inflater).setLabel("Move Speed").setIcon(R.drawable.ic_speed_gray46).setUnits(" / 10");
+            moveSpeed.setOnClick(new CustomCallback(getActivity()) {
+                @Override
+                public void run() {
+                    NumberPickerDialog dialog = new NumberPickerDialog(getActivity(), "Move Speed", moveSpeed.getValue()).setMax(10).setMin(0);
+                    dialog.show();
+
+                    dialog.setOnChange(new NumberPickerDialog.OnChangeListener() {
+                        @Override
+                        public void onValueChange(int value) {
+                            moveSpeed.setValue(value);
+                        }
+                    });
+                }
+            });
+            new DeviceInfoRow(stats, inflater).setLabel("Stride Length").setIcon(R.drawable.ic_ruler_gray46).setUnits(" inch");
+            new DeviceInfoRow(stats, inflater).setLabel("Device Angle").setIcon(R.drawable.ic_angle_gray46).setUnits(" deg");
+            new DeviceInfoRow(stats, inflater).setLabel("Avg Cycle Pace").setIcon(R.drawable.ic_feet_gray46).setUnits(" / min");
+
         } else if (mode == MODE.RESISTANCE) {
             // Set the button colors
             modeResistance.setBackgroundResource(R.drawable.mode_resistance_button);
@@ -142,13 +140,26 @@ public class DeviceControlFragment extends BaseFragment {
             modeAssistance.setTextColor(ContextCompat.getColor(getActivity(), R.color.darkGray));
             modeAssistance.setBackgroundResource(0);
 
-            // Show the right container
-            rootView.findViewById(R.id.assistance_options).setVisibility(View.GONE);
-            rootView.findViewById(R.id.resistance_options).setVisibility(View.VISIBLE);
-        }
+            final DeviceInfoRow resistanceLevel = new DeviceInfoRow(stats, inflater).setLabel("Resistance Level").setIcon(R.drawable.ic_steps_gray46).setUnits(" / 10");
+            resistanceLevel.setOnClick(new CustomCallback(getActivity()) {
+                @Override
+                public void run() {
+                    NumberPickerDialog dialog = new NumberPickerDialog(getActivity(), "Resistance Level", resistanceLevel.getValue()).setMax(10).setMin(0).setUnits("inches");
+                    dialog.show();
 
-        assistanceSession.pause();
-        resistanceSession.pause();
+                    dialog.setOnChange(new NumberPickerDialog.OnChangeListener() {
+                        @Override
+                        public void onValueChange(int value) {
+                            resistanceLevel.setValue(value);
+                        }
+                    });
+                }
+            });
+
+            new DeviceInfoRow(stats, inflater).setLabel("Stride Length").setIcon(R.drawable.ic_ruler_gray46).setUnits(" inch");
+            new DeviceInfoRow(stats, inflater).setLabel("Device Angle").setIcon(R.drawable.ic_angle_gray46).setUnits(" deg");
+
+        }
     }
 
     public enum MODE {

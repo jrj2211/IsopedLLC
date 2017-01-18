@@ -2,50 +2,88 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:minWidth="300dp"
     android:orientation="vertical">
-
-    <TextView
-        android:id="@+id/picker_label"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="5dp"
-        android:fontFamily="sans-serif-light"
-        android:gravity="left"
-        android:textColor="@color/darkGray"
-        android:textSize="15sp" />
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:layout_marginBottom="15dp"
-        android:background="@drawable/corner_radius_whisper"
-        android:orientation="horizontal">
-
-        <ImageButton
-            android:id="@+id/picker_down"
-            android:layout_width="60dp"
-            android:layout_height="match_parent"
-            android:layout_weight="0"
-            android:background="@drawable/number_picker_button"
-            android:src="@drawable/ic_chevron_left_black" />
+        android:layout_height="wrap_content"
+        android:background="@color/colorPrimary"
+        android:orientation="vertical"
+        android:paddingBottom="10dp"
+        android:paddingLeft="30dp"
+        android:paddingRight="30dp"
+        android:paddingTop="15dp">
 
         <TextView
-            android:id="@+id/picker_display"
+            android:id="@+id/label"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:fontFamily="sans-serif-light"
-            android:gravity="center"
-            android:textColor="@color/darkGray"
-            android:textSize="25sp" />
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="5dp"
+            android:fontFamily="sans-serif-bold"
+            android:textAlignment="center"
+            android:textColor="@color/white"
+            android:textSize="30sp" />
 
-        <ImageButton
-            android:id="@+id/picker_up"
-            android:layout_width="60dp"
-            android:layout_height="match_parent"
-            android:layout_weight="0"
-            android:background="@drawable/number_picker_button"
-            android:src="@drawable/ic_chevron_right_black" />
+        <TextView
+            android:id="@+id/units"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="5dp"
+            android:fontFamily="sans-serif-light"
+            android:textAlignment="center"
+            android:textAllCaps="true"
+            android:textColor="@color/white"
+            android:textSize="15sp" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="15dp"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/picker_down"
+                android:layout_width="60dp"
+                android:layout_height="match_parent"
+                android:background="@drawable/number_picker_button"
+                android:src="@drawable/ic_chevron_left_black" />
+
+            <TextView
+                android:id="@+id/picker_display"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:fontFamily="sans-serif-light"
+                android:textAlignment="center"
+                android:textColor="@color/darkGray"
+                android:textSize="60sp" />
+
+            <ImageButton
+                android:id="@+id/picker_up"
+                android:layout_width="60dp"
+                android:layout_height="match_parent"
+                android:background="@drawable/number_picker_button"
+                android:src="@drawable/ic_chevron_right_black" />
+
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/close"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"
+            android:layout_marginTop="15dp"
+            android:text="Close"
+            android:textColor="@color/colorAccent" />
 
     </LinearLayout>
 

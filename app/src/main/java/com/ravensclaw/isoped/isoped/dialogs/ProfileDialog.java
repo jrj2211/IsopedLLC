@@ -1,6 +1,7 @@
 package com.ravensclaw.isoped.isoped.dialogs;
 
 import android.app.Dialog;
+import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.TextView;
@@ -8,7 +9,7 @@ import android.widget.TextView;
 import com.ravensclaw.isoped.isoped.R;
 import com.ravensclaw.isoped.isoped.database.User;
 import com.ravensclaw.isoped.isoped.fragments.BaseFragment;
-import com.ravensclaw.isoped.isoped.fragments.usermode.DeviceControlFragment;
+import com.ravensclaw.isoped.isoped.fragments.UserAddFragment;
 import com.ravensclaw.isoped.isoped.helpers.AppSettings;
 
 /**
@@ -31,11 +32,15 @@ public class ProfileDialog extends Dialog {
 
         ((TextView) findViewById(R.id.user_name)).setText(user.getFullName());
 
-        findViewById(R.id.device_control).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.edit).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                settings.setUser(uid);
-                BaseFragment.startFragment(activity, new DeviceControlFragment());
+                Bundle bundle = new Bundle();
+                bundle.putLong("uid", uid);
+                BaseFragment frag = new UserAddFragment();
+                frag.setArguments(bundle);
+
+                BaseFragment.startFragment(activity, frag);
                 dismiss();
             }
         });

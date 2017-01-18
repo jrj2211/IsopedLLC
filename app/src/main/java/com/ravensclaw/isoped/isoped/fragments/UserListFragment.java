@@ -31,17 +31,24 @@ public class UserListFragment extends BaseFragment {
         }
     };
 
-    private View.OnClickListener selectUserListener = new View.OnClickListener() {
-        public void onClick(View v) {
-            if (settings.isType(AppSettings.TYPES.PROFESSIONAL)) {
-                ProfileDialog dialog = new ProfileDialog((AppCompatActivity) getActivity(), (Long) v.getTag());
-                dialog.show();
-            } else {
-                settings.setUser((Long) v.getTag());
+    private void selectUser(View view, final Long uid) {
+        view.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                settings.setUser(uid);
                 BaseFragment.startFragment(getActivity(), new DeviceControlFragment());
             }
-        }
-    };
+        });
+    }
+
+    private void openUserProfile(View view, final Long uid) {
+        view.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ProfileDialog dialog = new ProfileDialog((AppCompatActivity) getActivity(), uid);
+                dialog.show();
+            }
+        });
+    }
 
     @Override
     public String getTitle() {
@@ -92,9 +99,10 @@ public class UserListFragment extends BaseFragment {
                 User user = new User(getActivity(), uid);
                 TableRow row = (TableRow) inflater.inflate(R.layout.user_list_row, null);
                 ((TextView) row.findViewById(R.id.userName)).setText(user.getFullName());
-                row.setTag(uid);
                 table.addView(row);
-                row.setOnClickListener(selectUserListener);
+
+                selectUser(row.findViewById(R.id.userName), uid);
+                openUserProfile(row.findViewById(R.id.profile), uid);
             }
         }
     }
