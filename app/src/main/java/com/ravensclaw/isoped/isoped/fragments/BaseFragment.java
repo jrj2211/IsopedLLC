@@ -177,12 +177,6 @@ public abstract class BaseFragment extends Fragment {
         }
     }
 
-    public void popBackStack() {
-        if (getActivity().getSupportFragmentManager().getBackStackEntryCount() > 0) {
-            getActivity().getSupportFragmentManager().popBackStack();
-        }
-    }
-
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);

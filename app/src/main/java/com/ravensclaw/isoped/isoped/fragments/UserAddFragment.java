@@ -1,10 +1,10 @@
 package com.ravensclaw.isoped.isoped.fragments;
 
+import android.app.AlertDialog;
 import android.content.ContentValues;
-import android.graphics.drawable.Drawable;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.design.widget.TextInputLayout;
-import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -12,9 +12,11 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.Toast;
 
 import com.ravensclaw.isoped.isoped.R;
 import com.ravensclaw.isoped.isoped.database.User;
+import com.ravensclaw.isoped.isoped.helpers.FormValidation;
 
 /**
  * Created by CAD Station on 12/20/2016.
@@ -23,6 +25,7 @@ import com.ravensclaw.isoped.isoped.database.User;
 public class UserAddFragment extends BaseFragment {
 
     private User user = null;
+    private FormValidation validator;
 
     @Override
     public String getTitle() {
@@ -39,14 +42,21 @@ public class UserAddFragment extends BaseFragment {
     }
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstance) {
-        Bundle args = getArguments();
-        user = new User(getActivity(), args.getLong("uid"));
-
         super.onCreate(savedInstance);
 
-        setHasOptionsMenu(true);
-
         rootView = inflater.inflate(R.layout.user_add, container, false);
+
+        // Try and load the user to edit
+        Bundle args = getArguments();
+        if (args != null && args.containsKey("uid")) {
+            user = new User(getActivity(), args.getLong("uid"));
+
+            // Update with users information if they exist
+            ((TextInputLayout) rootView.findViewById(R.id.adduser_name_first)).getEditText().setText(user.getFirstName());
+            ((TextInputLayout) rootView.findViewById(R.id.adduser_name_last)).getEditText().setText(user.getLastName());
+            ((TextInputLayout) rootView.findViewById(R.id.adduser_phone)).getEditText().setText(user.getPhone());
+            ((TextInputLayout) rootView.findViewById(R.id.adduser_notes)).getEditText().setText(user.getNotes());
+        }
 
         ((Button) rootView.findViewById(R.id.adduser_submit)).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -55,14 +65,20 @@ public class UserAddFragment extends BaseFragment {
             }
         });
 
+        // Setup validation
+        validator = new FormValidation();
+        validator.add(rootView.findViewById(R.id.adduser_name_first), FormValidation.TYPES.NAME, true);
+        validator.add(rootView.findViewById(R.id.adduser_name_last), FormValidation.TYPES.NAME, true);
+        validator.add(rootView.findViewById(R.id.adduser_phone), FormValidation.TYPES.PHONE, false);
+
         return rootView;
     }
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         if (user != null) {
-            inflater.inflate(R.menu.delete_menu, menu);
             super.onCreateOptionsMenu(menu, inflater);
+            inflater.inflate(R.menu.delete_menu, menu);
         }
     }
 
@@ -71,51 +87,68 @@ public class UserAddFragment extends BaseFragment {
         int id = item.getItemId();
         switch (id) {
             case R.id.menu_delete:
-                super.popBackStack();
+                deleteUser();
                 return true;
         }
 
-        return false;
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void deleteUser() {
+        new AlertDialog.Builder(getActivity())
+                .setIcon(R.drawable.ic_error)
+                .setTitle("Delete user")
+                .setMessage("Are you sure you want to permanently delete this user?")
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        user.delete();
+                        getActivity().onBackPressed();
+                    }
+
+                })
+                .setNegativeButton("No", null)
+                .show();
     }
 
     private void submit() {
-        int numErrors = 0;
+        boolean hasErrors = validator.validate();
 
-        // Get the error icon
-        Drawable errorIcon = ContextCompat.getDrawable(getActivity(), R.drawable.ic_error);
-        errorIcon.setBounds(0, 0, errorIcon.getIntrinsicWidth(), errorIcon.getIntrinsicHeight());
+        TextInputLayout firstName = (TextInputLayout) rootView.findViewById(R.id.adduser_name_first);
+        TextInputLayout lastName = (TextInputLayout) rootView.findViewById(R.id.adduser_name_last);
+        TextInputLayout phone = (TextInputLayout) rootView.findViewById(R.id.adduser_phone);
+        TextInputLayout notes = (TextInputLayout) rootView.findViewById(R.id.adduser_notes);
 
-        TextInputLayout firstNameView = (TextInputLayout) rootView.findViewById(R.id.adduser_name_first);
-        TextInputLayout lastNameView = (TextInputLayout) rootView.findViewById(R.id.adduser_name_last);
-        TextInputLayout phoneView = (TextInputLayout) rootView.findViewById(R.id.adduser_phone);
-
-        String firstName = firstNameView.getEditText().getText().toString();
-        String lastName = lastNameView.getEditText().getText().toString();
-        String phone = phoneView.getEditText().getText().toString();
-
-        if (firstName.isEmpty()) {
-            firstNameView.setError("Cannot be blank");
-            numErrors++;
-        }
-
-        if (lastName.isEmpty()) {
-            lastNameView.setError("Cannot be blank");
-            numErrors++;
-        }
-
-        if (phone.isEmpty()) {
-            phoneView.setError("Cannot be blank");
-            numErrors++;
-        }
-
-        if (numErrors == 0) {
-            // Add a new user
+        if (hasErrors == false) {
             ContentValues values = new ContentValues();
-            values.put(User.Columns.COLUMN_NAME_FIRST, firstName);
-            values.put(User.Columns.COLUMN_NAME_LAST, lastName);
-            User.insert(getActivity(), values);
+            values.put(User.Columns.COLUMN_NAME_FIRST, validator.getValue(firstName));
+            values.put(User.Columns.COLUMN_NAME_LAST, validator.getValue(lastName));
+            values.put(User.Columns.COLUMN_PHONE, validator.getValue(phone));
+            values.put(User.Columns.COLUMN_NOTES, validator.getValue(notes));
 
-            popBackStack();
+            CharSequence text;
+
+            if (user == null) {
+                // Add a new user
+                Long newUID = User.insert(getActivity(), values);
+                User newUser = new User(getActivity(), newUID);
+
+                // Toast message
+                text = newUser.getFullName() + " was added!";
+            } else {
+                // Update current user information
+                user.update(values);
+
+                // Toast message
+                text = user.getFullName() + " updated!";
+            }
+
+            // Show a toast
+            Toast toast = Toast.makeText(getActivity(), text, Toast.LENGTH_SHORT);
+            toast.show();
+
+            getActivity().onBackPressed();
         }
     }
+
 }

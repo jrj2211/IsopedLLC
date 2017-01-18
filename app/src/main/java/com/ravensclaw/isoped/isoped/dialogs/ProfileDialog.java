@@ -30,7 +30,20 @@ public class ProfileDialog extends Dialog {
 
         User user = new User(a, uid);
 
+        String phone = user.getPhone();
+        String notes = user.getNotes();
+
+        if (phone == null || phone.isEmpty()) {
+            phone = "No phone number saved";
+        }
+
+        if (notes == null || notes.isEmpty()) {
+            notes = "No notes saved";
+        }
+
         ((TextView) findViewById(R.id.user_name)).setText(user.getFullName());
+        ((TextView) findViewById(R.id.phone)).setText(phone);
+        ((TextView) findViewById(R.id.notes)).setText(notes);
 
         findViewById(R.id.edit).setOnClickListener(new View.OnClickListener() {
             @Override

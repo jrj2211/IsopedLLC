@@ -15,11 +15,13 @@ import com.ravensclaw.isoped.isoped.R;
 public class DeviceInfoRow {
 
     private View rootView;
-    private int value;
+    private int value = 0;
 
     public DeviceInfoRow(ViewGroup container, LayoutInflater inflater) {
         rootView = inflater.inflate(R.layout.device_info_row, null);
         container.addView(rootView);
+
+        setValue(0);
     }
 
     public DeviceInfoRow setOnClick(final CustomCallback cb) {
@@ -44,7 +46,12 @@ public class DeviceInfoRow {
     }
 
     public DeviceInfoRow setUnits(String units) {
-        ((TextView) rootView.findViewById(R.id.units)).setText(units);
+        if (units.isEmpty()) {
+            ((TextView) rootView.findViewById(R.id.units)).setVisibility(View.GONE);
+        } else {
+            ((TextView) rootView.findViewById(R.id.units)).setText(units);
+            ((TextView) rootView.findViewById(R.id.units)).setVisibility(View.VISIBLE);
+        }
         return this;
     }
 

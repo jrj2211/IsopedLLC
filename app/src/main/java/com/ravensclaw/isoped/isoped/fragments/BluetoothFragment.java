@@ -42,8 +42,6 @@ public class BluetoothFragment extends BaseFragment {
 
         rootView = inflater.inflate(R.layout.bluetooth, container, false);
 
-        setHasOptionsMenu(true);
-
         rootView.findViewById(R.id.settings_scan).setOnClickListener(scanListener);
 
         // Get the bluetooth wrapper

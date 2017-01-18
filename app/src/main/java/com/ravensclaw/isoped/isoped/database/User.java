@@ -17,21 +17,23 @@ public class User {
                     Columns._ID + " INTEGER PRIMARY KEY," +
                     Columns.COLUMN_NAME_FIRST + " TEXT," +
                     Columns.COLUMN_NAME_LAST + " TEXT," +
-                    Columns.COLUMN_PHONE + " INT)";
+                    Columns.COLUMN_NOTES + " TEXT," +
+                    Columns.COLUMN_PHONE + " TEXT)";
     public static final String SQL_DELETE_ENTRIES =
             "DROP TABLE IF EXISTS " + Columns.TABLE_NAME;
-    Cursor userInfo;
+    private Cursor userInfo;
     private DbHelper dbHelper;
-
+    private Activity activity;
     public User(Activity activity, long uid) {
-
+        this.activity = activity;
         dbHelper = DbHelper.getInstance(activity);
 
         String[] projection = {
                 Columns._ID,
                 Columns.COLUMN_NAME_FIRST,
                 Columns.COLUMN_NAME_LAST,
-                Columns.COLUMN_PHONE
+                Columns.COLUMN_PHONE,
+                Columns.COLUMN_NOTES
         };
 
         // Selection parameters
@@ -48,14 +50,6 @@ public class User {
                 null,                                       // The sort order
                 "1"                                         // limit to 1
         );
-    }
-
-    static public long insert(Activity activity, ContentValues values) {
-        DbHelper dbHelper = DbHelper.getInstance(activity);
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
-        // Insert the new row, returning the primary key value of the new row
-        long insert_id = db.insert(User.Columns.TABLE_NAME, null, values);
-        return insert_id;
     }
 
     static public Cursor getList(Activity activity) {
@@ -89,6 +83,44 @@ public class User {
         return cursor;
     }
 
+    static public long insert(Activity activity, ContentValues values) {
+        DbHelper dbHelper = DbHelper.getInstance(activity);
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        // Insert the new row, returning the primary key value of the new row
+        long insert_id = db.insert(User.Columns.TABLE_NAME, null, values);
+        return insert_id;
+    }
+
+    public void delete() {
+        DbHelper dbHelper = DbHelper.getInstance(activity);
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+
+        String selection = User.Columns._ID + "=?";
+        String[] selectionArgs = {Long.toString(getUID())};
+
+        db.delete(User.Columns.TABLE_NAME, selection, selectionArgs);
+    }
+
+    public void update(ContentValues values) {
+        DbHelper dbHelper = DbHelper.getInstance(activity);
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+
+        String selection = User.Columns._ID + "=?";
+        String[] selectionArgs = {Long.toString(getUID())};
+
+        db.update(User.Columns.TABLE_NAME, values, selection, selectionArgs);
+    }
+
+    public long getUID() {
+        long uid = -1;
+        if (userInfo.moveToFirst()) {
+            if (userInfo.getCount() > 0 && userInfo.getColumnIndex(Columns._ID) != -1) {
+                uid = userInfo.getLong(userInfo.getColumnIndex(Columns._ID));
+            }
+        }
+        return uid;
+    }
+
     public String getFirstName() {
         String name = "";
         if (userInfo.moveToFirst()) {
@@ -111,6 +143,26 @@ public class User {
 
     public String getFullName() {
         return getFirstName() + " " + getLastName();
+    }
+
+    public String getPhone() {
+        String phone = "";
+        if (userInfo.moveToFirst()) {
+            if (userInfo.getCount() > 0 && userInfo.getColumnIndex(Columns.COLUMN_PHONE) != -1) {
+                phone = userInfo.getString(userInfo.getColumnIndex(Columns.COLUMN_PHONE));
+            }
+        }
+        return phone;
+    }
+
+    public String getNotes() {
+        String notes = "";
+        if (userInfo.moveToFirst()) {
+            if (userInfo.getCount() > 0 && userInfo.getColumnIndex(Columns.COLUMN_NOTES) != -1) {
+                notes = userInfo.getString(userInfo.getColumnIndex(Columns.COLUMN_NOTES));
+            }
+        }
+        return notes;
     }
 
     public static class Columns implements BaseColumns {

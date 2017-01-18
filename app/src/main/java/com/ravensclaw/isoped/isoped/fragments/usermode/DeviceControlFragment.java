@@ -29,6 +29,8 @@ public class DeviceControlFragment extends BaseFragment {
     private User user = null;
     private String title = "ISOPED";
     private LayoutInflater inflater;
+    private SessionStats sessionStats;
+
     private View.OnClickListener selectModeListener = new View.OnClickListener() {
         public void onClick(View v) {
             switch (v.getId()) {
@@ -88,16 +90,15 @@ public class DeviceControlFragment extends BaseFragment {
         modeAssistance.setOnClickListener(selectModeListener);
         modeResistance.setOnClickListener(selectModeListener);
 
-        ViewGroup stats = (ViewGroup) rootView.findViewById(R.id.stats);
-
-        selectMode(MODE.ASSISTANCE);
-
-        SessionStats sessionStats = new SessionStats(getActivity());
+        // Create a session controller
+        sessionStats = new SessionStats(getActivity());
         sessionStats.setCyclesView((TextView) rootView.findViewById(R.id.session_cycles));
         sessionStats.setTimerView((TextView) rootView.findViewById(R.id.session_time));
         sessionStats.setSessionButton((Button) rootView.findViewById(R.id.session_button));
         sessionStats.setResetButton((Button) rootView.findViewById(R.id.session_reset));
         sessionStats.reset();
+
+        selectMode(MODE.ASSISTANCE);
 
         return rootView;
     }
@@ -129,9 +130,28 @@ public class DeviceControlFragment extends BaseFragment {
                     });
                 }
             });
-            new DeviceInfoRow(stats, inflater).setLabel("Stride Length").setIcon(R.drawable.ic_ruler_gray46).setUnits(" inch");
-            new DeviceInfoRow(stats, inflater).setLabel("Device Angle").setIcon(R.drawable.ic_angle_gray46).setUnits(" deg");
-            new DeviceInfoRow(stats, inflater).setLabel("Avg Cycle Pace").setIcon(R.drawable.ic_feet_gray46).setUnits(" / min");
+
+            final DeviceInfoRow strideLength = new DeviceInfoRow(stats, inflater).setLabel("Stride Length").setIcon(R.drawable.ic_ruler_gray46).setUnits(" inch");
+            strideLength.setOnClick(new CustomCallback(getActivity()) {
+                @Override
+                public void run() {
+                    NumberPickerDialog dialog = new NumberPickerDialog(getActivity(), "Stride Length", strideLength.getValue()).setMax(10).setMin(0).setUnits("inches");
+                    dialog.show();
+
+                    dialog.setOnChange(new NumberPickerDialog.OnChangeListener() {
+                        @Override
+                        public void onValueChange(int value) {
+                            strideLength.setValue(value);
+                        }
+                    });
+                }
+            });
+
+            final DeviceInfoRow deviceAngle = new DeviceInfoRow(stats, inflater).setLabel("Device Angle").setIcon(R.drawable.ic_angle_gray46).setUnits(" deg");
+            sessionStats.setDeviceAngleView(deviceAngle);
+
+            final DeviceInfoRow cyclePace = new DeviceInfoRow(stats, inflater).setLabel("Avg Cycle Pace").setIcon(R.drawable.ic_feet_gray46).setUnits(" / min");
+            sessionStats.setCyclePaceView(cyclePace);
 
         } else if (mode == MODE.RESISTANCE) {
             // Set the button colors
@@ -144,7 +164,7 @@ public class DeviceControlFragment extends BaseFragment {
             resistanceLevel.setOnClick(new CustomCallback(getActivity()) {
                 @Override
                 public void run() {
-                    NumberPickerDialog dialog = new NumberPickerDialog(getActivity(), "Resistance Level", resistanceLevel.getValue()).setMax(10).setMin(0).setUnits("inches");
+                    NumberPickerDialog dialog = new NumberPickerDialog(getActivity(), "Resistance Level", resistanceLevel.getValue()).setMax(10).setMin(0);
                     dialog.show();
 
                     dialog.setOnChange(new NumberPickerDialog.OnChangeListener() {
@@ -156,8 +176,24 @@ public class DeviceControlFragment extends BaseFragment {
                 }
             });
 
-            new DeviceInfoRow(stats, inflater).setLabel("Stride Length").setIcon(R.drawable.ic_ruler_gray46).setUnits(" inch");
-            new DeviceInfoRow(stats, inflater).setLabel("Device Angle").setIcon(R.drawable.ic_angle_gray46).setUnits(" deg");
+            final DeviceInfoRow strideLength = new DeviceInfoRow(stats, inflater).setLabel("Stride Length").setIcon(R.drawable.ic_ruler_gray46).setUnits(" inch");
+            strideLength.setOnClick(new CustomCallback(getActivity()) {
+                @Override
+                public void run() {
+                    NumberPickerDialog dialog = new NumberPickerDialog(getActivity(), "Stride Length", strideLength.getValue()).setMax(10).setMin(0).setUnits("inches");
+                    dialog.show();
+
+                    dialog.setOnChange(new NumberPickerDialog.OnChangeListener() {
+                        @Override
+                        public void onValueChange(int value) {
+                            strideLength.setValue(value);
+                        }
+                    });
+                }
+            });
+
+            final DeviceInfoRow deviceAngle = new DeviceInfoRow(stats, inflater).setLabel("Device Angle").setIcon(R.drawable.ic_angle_gray46).setUnits(" deg");
+            sessionStats.setDeviceAngleView(deviceAngle);
 
         }
     }

@@ -37,8 +37,6 @@ public class SettingsFragment extends BaseFragment {
 
         rootView = inflater.inflate(R.layout.settings, container, false);
 
-        setHasOptionsMenu(true);
-
         rootView.findViewById(R.id.settings_rerun).setOnClickListener(rerunSetupListener);
 
         return rootView;

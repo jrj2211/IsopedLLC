@@ -29,6 +29,9 @@ public class SessionStats {
     private TextView cyclesView;
     private Button sessionButton;
     private Button resetButton;
+    private DeviceInfoRow deviceAngle;
+    private DeviceInfoRow cyclePace;
+
     private Runnable mRunnable = new Runnable() {
         @Override
         public void run() {
@@ -48,11 +51,60 @@ public class SessionStats {
         }
     };
 
+    private Runnable mDeviceAngleRandom = new Runnable() {
+        @Override
+        public void run() {
+            // TODO: REMOVE THIS
+            mHandler.postDelayed(mDeviceAngleRandom, 2000);
+
+            Random r = new Random();
+            if (r.nextBoolean()) {
+                int angle = r.nextInt(45);
+                if (deviceAngle != null) {
+                    deviceAngle.setValue(angle);
+                }
+                ;
+            }
+        }
+    };
+
+    private Runnable mCyclePace = new Runnable() {
+        @Override
+        public void run() {
+            // TODO: REMOVE THIS
+            mHandler.postDelayed(mCyclePace, 2000);
+
+            Random r = new Random();
+            if (r.nextBoolean()) {
+                int angle = r.nextInt(20);
+                if (cyclePace != null) {
+                    cyclePace.setValue(angle);
+                }
+                ;
+            }
+        }
+    };
+
+
     public SessionStats(Activity a) {
         activity = a;
         mHandler = new Handler();
 
+        // TODO: REMOVE THIS
+        mHandler.postDelayed(mDeviceAngleRandom, 2000);
+        mHandler.postDelayed(mCyclePace, 2000);
+
         reset();
+    }
+
+    public SessionStats setDeviceAngleView(DeviceInfoRow info) {
+        deviceAngle = info;
+        return this;
+    }
+
+    public SessionStats setCyclePaceView(DeviceInfoRow info) {
+        cyclePace = info;
+        return this;
     }
 
     public SessionStats setTimerView(TextView view) {

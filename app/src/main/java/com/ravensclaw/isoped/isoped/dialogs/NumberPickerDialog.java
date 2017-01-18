@@ -71,7 +71,12 @@ public class NumberPickerDialog extends Dialog {
     }
 
     public NumberPickerDialog setUnits(String units) {
-        ((TextView) findViewById(R.id.units)).setText(units);
+        if (units.isEmpty()) {
+            ((TextView) findViewById(R.id.units)).setVisibility(View.GONE);
+        } else {
+            ((TextView) findViewById(R.id.units)).setText(units);
+            ((TextView) findViewById(R.id.units)).setVisibility(View.VISIBLE);
+        }
         return this;
     }
 
