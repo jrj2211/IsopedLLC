@@ -2,4 +2,13 @@
     <string name="app_name">ISOPED</string>
     <string name="app_slogan">Assembled in the USA</string>
     <string name='font_quantify'>fonts/Quantify-Bold.ttf</string>
+
+    <string name='bluetoothName'>Isoped Control</string>
+
+    <string name='gatt_elevation_service'>01376f81-d03b-12e2-9bb5-0103a6d6c61c</string>
+    <string name='gatt_elevation_characteristic'>02376f81-d03b-12e2-9bb5-0103a6d6c61c</string>
+
+    <string name='gatt_motor_service'>03376f81-d03b-12e2-9bb5-0103a6d6c61c</string>
+    <string name='gatt_motor_control_characteristic'>04376f81-d03b-12e2-9bb5-0103a6d6c61c</string>
+    <string name='gatt_motor_stride_characteristic'>05376f81-d03b-12e2-9bb5-0103a6d6c61c</string>
 </resources>

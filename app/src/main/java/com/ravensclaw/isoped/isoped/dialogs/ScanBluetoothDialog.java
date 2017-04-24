@@ -1,23 +1,31 @@
 package com.ravensclaw.isoped.isoped.dialogs;
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGattCharacteristic;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.location.LocationManager;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.view.Window;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import com.ravensclaw.isoped.isoped.R;
-import com.ravensclaw.isoped.isoped.helpers.Bluetooth;
+import com.ravensclaw.isoped.isoped.activities.MainActivity;
+import com.ravensclaw.isoped.isoped.helpers.BleDeviceScanner;
 import com.ravensclaw.isoped.isoped.helpers.ListAdapterBluetooth;
+import com.ravensclaw.isoped.isoped.services.BluetoothLeService;
 
 import java.util.ArrayList;
 
@@ -27,135 +35,137 @@ import java.util.ArrayList;
 
 public class ScanBluetoothDialog extends Dialog {
 
-    private AppCompatActivity activity;
-    private ListAdapterBluetooth btAdapter;
-    private ArrayList<BluetoothDevice> devices;
-    private ListView btListView;
-    private BroadcastReceiver receiver;
-    private Bluetooth btController;
+    private final static String TAG = ScanBluetoothDialog.class.getSimpleName();
+
+    private AppCompatActivity mActivity;
+    private BleDeviceScanner mBleDeviceScanner;
+    private ListAdapterBluetooth mDevicesListAdapter;
+    private ListView mDevicesListView;
+    private LocationManager mLocationManager;
+
+    private BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
+        @Override
+        public void onLeScan(final BluetoothDevice device, int rssi, byte[] scanRecord) {
+            mDevicesListAdapter.addDevice(device);
+        }
+    };
+
+    private BleDeviceScanner.ScanStoppedCallback mScanStoppedCallback = new BleDeviceScanner.ScanStoppedCallback() {
+        @Override
+        public void onStopped() {
+            onScanFinish();
+        }
+    };
 
     public ScanBluetoothDialog(AppCompatActivity a) {
         super(a);
-        this.activity = a;
+
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+
+        this.mActivity = a;
         this.setContentView(R.layout.bluetooth_scan);
+
+        mLocationManager = (LocationManager) getContext().getSystemService(Context.LOCATION_SERVICE);
 
         // Should just cancel instead of hide
         setCancelable(true);
         setCanceledOnTouchOutside(true);
 
-        // Get the bluetooth wrapper
-        btController = new Bluetooth(activity);
+        // Get the bluetooth LE adapter
+        mBleDeviceScanner = new BleDeviceScanner();
+        mBleDeviceScanner.onStop(mScanStoppedCallback);
 
-        // Setup the list view adapter to populate when devices are found
-        devices = new ArrayList<BluetoothDevice>();
-        btAdapter = new ListAdapterBluetooth((AppCompatActivity) activity, devices);
-        btListView = (ListView) findViewById(R.id.bluetoothDevices);
-        btListView.setAdapter(btAdapter);
+        // Setup the list view adapter to populate when mFoundDevices are found
+        mDevicesListAdapter = new ListAdapterBluetooth(getContext());
+        mDevicesListView = (ListView) findViewById(R.id.bluetoothDevices);
+        mDevicesListView.setAdapter(mDevicesListAdapter);
 
-        // What to do when we get actions
-        receiver = createReceiver();
-
-        onDiscoveryStart();
-
-        // Start the scan
-        btController.scan(receiver);
+        if(checkLocationEnabled()) {
+            // Automatically start a scan
+            onScanStart();
+        } else {
+            // Request to enable location
+            showEnableLocation();
+        }
 
         // Retry scan button
-        findViewById(R.id.retry).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.scanErrorButton).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                receiver = createReceiver();
-                btController.scan(receiver);
-            }
-        });
-
-        btListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                BluetoothDevice item = btAdapter.getItem(position);
-                startPairing(item, view);
-            }
-        });
-
-        setOnDismissListener(new OnDismissListener() {
-            @Override
-            public void onDismiss(final DialogInterface arg0) {
-                removeReceiver();
-            }
-        });
-    }
-
-    private void startPairing(BluetoothDevice device, View view) {
-        view.findViewById(R.id.bluetoothSpinner).setVisibility(View.VISIBLE);
-        view.findViewById(R.id.bluetoothMac).setVisibility(View.GONE);
-
-        boolean success = false;
-
-        try {
-            success = btController.pairDevice(device);
-        } catch (Exception e) {
-        }
-
-        Log.e("success?", Boolean.toString(success));
-        if (!success) {
-            view.findViewById(R.id.bluetoothSpinner).setVisibility(View.GONE);
-            view.findViewById(R.id.bluetoothMac).setVisibility(View.VISIBLE);
-            ((TextView) view.findViewById(R.id.bluetoothMac)).setText("Pair Failed");
-        }
-    }
-
-    private BroadcastReceiver createReceiver() {
-        return new BroadcastReceiver() {
-            public void onReceive(Context context, Intent intent) {
-                String action = intent.getAction();
-
-                //Finding devices
-                if (BluetoothDevice.ACTION_FOUND.equals(action)) {
-                    // Get the BluetoothDevice object from the Intent
-                    BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-
-                    if (device.getBondState() == BluetoothDevice.BOND_NONE) {
-                        btAdapter.add(device);
-                    }
-                } else if (BluetoothAdapter.ACTION_DISCOVERY_STARTED.equals(action)) {
-                    onDiscoveryStart();
-                } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
-                    onDiscoveryFinish();
+                if(checkLocationEnabled()) {
+                    onScanStart();
+                } else {
+                    getContext().startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
                 }
             }
-        };
+        });
+
+        mDevicesListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Log.e(TAG, "trying to connect");
+                ((MainActivity) mActivity).connectToGatt(mDevicesListAdapter.getItem(position));
+
+                // Stop the scan
+                mBleDeviceScanner.scanLeDevice(false, mLeScanCallback);
+            }
+        });
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if(hasFocus) {
+            if(checkLocationEnabled()) {
+                onScanStart();
+            } else {
+                showEnableLocation();
+            }
+        }
     }
 
-    public void onDiscoveryStart() {
-        findViewById(R.id.noResults).setVisibility(View.GONE);
+    public void onScanStart() {
+        // Start Scanning
+        mBleDeviceScanner.scanLeDevice(true, mLeScanCallback);
+
+        // Remove no results
+        findViewById(R.id.scanError).setVisibility(View.GONE);
         ((TextView) findViewById(R.id.bluetoothStatus)).setText("Scanning...");
 
+        // Enable the spinner
         findViewById(R.id.spinner).setVisibility(View.VISIBLE);
 
-        btAdapter.clear();
+        // Reset the device list view
+        mDevicesListAdapter.clear();
     }
 
-    public void onDiscoveryFinish() {
+    public void onScanFinish() {
         ((TextView) findViewById(R.id.bluetoothStatus)).setText("Select A Device");
 
         findViewById(R.id.spinner).setVisibility(View.GONE);
 
-        if (btAdapter.getCount() == 0) {
-            findViewById(R.id.noResults).setVisibility(View.VISIBLE);
+        if(checkLocationEnabled()) {
+            if (mDevicesListAdapter.getCount() == 0) {
+                findViewById(R.id.scanError).setVisibility(View.VISIBLE);
+                ((TextView) findViewById(R.id.scanErrorMessage)).setText("No results found");
+                ((Button) findViewById(R.id.scanErrorButton)).setText("Retry Scan");
+            }
+        } else {
+            showEnableLocation();
         }
-
-        removeReceiver();
     }
 
-    private void removeReceiver() {
-        if (receiver != null) {
-            activity.unregisterReceiver(receiver);
-            receiver = null;
-        }
+    public boolean checkLocationEnabled() {
+        return (mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) &&
+                mLocationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER));
+    }
+
+    private void showEnableLocation() {
+        ((TextView) findViewById(R.id.bluetoothStatus)).setText("Location Required");
+        findViewById(R.id.scanError).setVisibility(View.VISIBLE);
+        findViewById(R.id.spinner).setVisibility(View.GONE);
+
+        ((TextView) findViewById(R.id.scanErrorMessage)).setText("Location services need to be enabled");
+        ((Button) findViewById(R.id.scanErrorButton)).setText("Enable Location");
     }
 }

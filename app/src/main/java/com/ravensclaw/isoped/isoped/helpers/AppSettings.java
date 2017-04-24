@@ -19,6 +19,8 @@ public class AppSettings {
     final private String KEY_PIN = "pin";
     final private String KEY_USER = "user";
     final private String KEY_PINNED_APP = "pinapp";
+    final private String SAVED_BLE_DEVICE = "bledevice";
+
     private SharedPreferences preferences;
     private SharedPreferences.Editor editor;
     private Activity mActivity;
@@ -36,6 +38,15 @@ public class AppSettings {
         }
 
         return mInstance;
+    }
+
+    public String getSavedBleDevice() {
+        return preferences.getString(SAVED_BLE_DEVICE, null);
+    }
+
+    public void setSavedBleDevice(String macAddress) {
+        editor.putString(SAVED_BLE_DEVICE, macAddress);
+        editor.commit();
     }
 
     public void setType(TYPES type) {
@@ -90,6 +101,7 @@ public class AppSettings {
         editor.clear().commit();
     }
 
+    // TODO MAKE THIS A CALLBACK
     public void finishSetup() {
         // Start main activity
         Intent intent = new Intent(mActivity, MainActivity.class);

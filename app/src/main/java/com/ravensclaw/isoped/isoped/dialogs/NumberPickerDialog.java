@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.os.Bundle;
 import android.view.View;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -25,6 +26,8 @@ public class NumberPickerDialog extends Dialog {
 
     public NumberPickerDialog(Activity a, String label, int defaultVal) {
         super(a);
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+
         this.activity = a;
         this.setContentView(R.layout.number_picker);
 

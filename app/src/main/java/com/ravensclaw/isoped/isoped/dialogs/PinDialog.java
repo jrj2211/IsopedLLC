@@ -4,6 +4,7 @@ import android.app.Dialog;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -28,6 +29,8 @@ public class PinDialog extends Dialog implements View.OnClickListener {
 
     public PinDialog(AppCompatActivity a, NavigationCallback cb) {
         super(a);
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+
         this.activity = a;
         this.setContentView(R.layout.pin_validate);
 

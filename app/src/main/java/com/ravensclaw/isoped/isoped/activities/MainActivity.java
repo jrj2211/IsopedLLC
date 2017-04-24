@@ -1,29 +1,36 @@
 package com.ravensclaw.isoped.isoped.activities;
 
+import android.bluetooth.BluetoothDevice;
+import android.content.ComponentName;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.MenuItem;
 
 import com.ravensclaw.isoped.isoped.R;
 import com.ravensclaw.isoped.isoped.dialogs.PinDialog;
 import com.ravensclaw.isoped.isoped.fragments.BaseFragment;
-import com.ravensclaw.isoped.isoped.fragments.BluetoothFragment;
 import com.ravensclaw.isoped.isoped.fragments.HelpFragment;
 import com.ravensclaw.isoped.isoped.fragments.SettingsFragment;
 import com.ravensclaw.isoped.isoped.fragments.UserListFragment;
 import com.ravensclaw.isoped.isoped.fragments.usermode.DeviceControlFragment;
 import com.ravensclaw.isoped.isoped.fragments.usermode.ProgressFragment;
 import com.ravensclaw.isoped.isoped.helpers.AppSettings;
-import com.ravensclaw.isoped.isoped.helpers.Bluetooth;
 import com.ravensclaw.isoped.isoped.helpers.NavigationCallback;
+import com.ravensclaw.isoped.isoped.services.BluetoothLeService;
 
 public class MainActivity extends AppCompatActivity {
 
+    private final static String TAG = MainActivity.class.getSimpleName();
     private DrawerLayout drawer;
+    public BluetoothLeService mBluetoothLeService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,9 +50,9 @@ public class MainActivity extends AppCompatActivity {
 
         drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
 
-        // Check that bluetooth is running
-        Bluetooth bt = new Bluetooth(this);
-        bt.requestEnabled();
+        // Create the service for the BLE device
+        Intent intent = new Intent(this, BluetoothLeService.class);
+        bindService(intent, mServiceConnection, BIND_AUTO_CREATE);
 
         // Setup the navigation toolbar
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -53,6 +60,15 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         setNavigationView();
+    }
+
+    @Override
+    protected void onDestroy()
+    {
+        Log.e(TAG, "Destroyed!");
+        super.onDestroy();
+        unbindService(mServiceConnection);
+        mBluetoothLeService = null;
     }
 
     public void setNavigationView() {
@@ -65,6 +81,30 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
     }
+
+    // Code to manage Service lifecycle.
+    private final ServiceConnection mServiceConnection = new ServiceConnection()
+    {
+
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder service)
+        {
+            Log.e(TAG, "Service Connected");
+            mBluetoothLeService = ((BluetoothLeService.LocalBinder) service).getService();
+
+            if (!mBluetoothLeService.initialize())
+            {
+                Log.e(TAG, "Unable to initialize Bluetooth");
+                finish();
+            }
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName componentName)
+        {
+            mBluetoothLeService = null;
+        }
+    };
 
     public void selectDrawerItem(MenuItem menuItem) {
         boolean checkItem = true;
@@ -90,9 +130,6 @@ public class MainActivity extends AppCompatActivity {
                 dialog.show();
                 checkItem = false;
                 break;
-            case R.id.drawer_devices:
-                BaseFragment.startFragment(this, new BluetoothFragment());
-                break;
             case R.id.drawer_progress:
                 BaseFragment.startFragment(this, new ProgressFragment());
                 break;
@@ -113,5 +150,11 @@ public class MainActivity extends AppCompatActivity {
         if (currentFragment.isBackAllowed()) {
             super.onBackPressed();
         }
+    }
+
+    public void connectToGatt(BluetoothDevice device) {
+        // Connect to the device
+        Log.e(TAG, device.getAddress());
+        mBluetoothLeService.connect(device.getAddress());
     }
 }

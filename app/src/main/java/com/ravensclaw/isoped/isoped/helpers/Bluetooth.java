@@ -4,36 +4,34 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
 import android.os.Build;
-import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.PermissionChecker;
 
 import com.ravensclaw.isoped.isoped.R;
-
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Set;
 
 /**
  * Created by CAD Station on 12/21/2016.
  */
 
 public class Bluetooth {
-    private final int PERMISSION_REQUEST_BLUETOOTH = 100;
+    public static final int PERMISSION_REQUEST_BLUETOOTH = 100;
+
     private final int REQUEST_ENABLE_BT = 100;
     private BluetoothAdapter mBluetoothAdapter;
     private Activity mActivity;
+    private BluetoothStateChangedCalledback mCallback;
 
-    public Bluetooth(Activity activity) {
+    public Bluetooth(Activity activity, BluetoothStateChangedCalledback callback) {
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         mActivity = activity;
+        mCallback = callback;
 
         // Phone does not support Bluetooth so let the user know and exit.
         if (mBluetoothAdapter == null) {
@@ -48,23 +46,26 @@ public class Bluetooth {
                     .setIcon(android.R.drawable.ic_dialog_alert)
                     .show();
         }
+
+        mActivity.registerReceiver(mReceiver, new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED));
     }
 
-    public boolean checkPermissions() {
-        boolean wait = false;
-        if (ContextCompat.checkSelfPermission(mActivity, Manifest.permission.WRITE_CALENDAR) == PermissionChecker.PERMISSION_DENIED) {
-            ActivityCompat.requestPermissions(mActivity,
-                    new String[]{Manifest.permission.READ_CONTACTS},
-                    PERMISSION_REQUEST_BLUETOOTH);
-            wait = true;
+    public boolean checkPermissions(Fragment fragment) {
+        boolean hasPerm = true;
+        if (ContextCompat.checkSelfPermission(mActivity, Manifest.permission.ACCESS_COARSE_LOCATION) == PermissionChecker.PERMISSION_DENIED) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                fragment.requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
+                        PERMISSION_REQUEST_BLUETOOTH);
+            }
+            hasPerm = false;
         }
 
-        return wait;
+        return hasPerm;
     }
 
     public boolean requestEnabled() {
         boolean wait = false;
-        if (!mBluetoothAdapter.isEnabled()) {
+        if (mBluetoothAdapter != null && !mBluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             mActivity.startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
             wait = true;
@@ -73,53 +74,21 @@ public class Bluetooth {
         return wait;
     }
 
-    public void scan(BroadcastReceiver receiver) {
+    public boolean isEnabled() {
+        return mBluetoothAdapter.isEnabled();
+    }
 
-        // Definitely want to ensure the bluetooth is on before scanning
-        requestEnabled();
-
-        // Android >6.0 requires location so get that permission if we dont have it
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {  // Only ask for these permissions on runtime when running Android 6.0 or higher
-            switch (ContextCompat.checkSelfPermission(mActivity, Manifest.permission.ACCESS_COARSE_LOCATION)) {
-                case PackageManager.PERMISSION_DENIED:
-                    if (ContextCompat.checkSelfPermission(mActivity, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                        ActivityCompat.requestPermissions(mActivity,
-                                new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
-                                mActivity.getResources().getInteger(R.integer.permissionCourseLocation));
-                    }
-                    break;
-                case PackageManager.PERMISSION_GRANTED:
-                    break;
+    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // It means the user has changed his bluetooth state.
+            if (intent.getAction().equals(BluetoothAdapter.ACTION_STATE_CHANGED)) {
+                mCallback.onStateChanged(mBluetoothAdapter.getState());
             }
         }
+    };
 
-        // Restart Discovery if already discovering
-        if (mBluetoothAdapter.isDiscovering()) {
-            mBluetoothAdapter.cancelDiscovery();
-        }
-
-        // Start the discovery
-        mBluetoothAdapter.startDiscovery();
-
-        // Setup what actions we are looking for
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(BluetoothDevice.ACTION_FOUND);
-        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED);
-        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
-
-        // Subscribe to the actions we want
-        mActivity.registerReceiver(receiver, filter);
-    }
-
-    public ArrayList<BluetoothDevice> getPairedDevices() {
-        Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
-        return new ArrayList<BluetoothDevice>(pairedDevices);
-    }
-
-    public boolean pairDevice(BluetoothDevice device) throws Exception {
-        Class class1 = Class.forName("android.bluetooth.BluetoothDevice");
-        Method createBondMethod = class1.getMethod("createBond");
-        Boolean returnValue = (Boolean) createBondMethod.invoke(device);
-        return returnValue.booleanValue();
+    public interface BluetoothStateChangedCalledback {
+        void onStateChanged(int state);
     }
 }

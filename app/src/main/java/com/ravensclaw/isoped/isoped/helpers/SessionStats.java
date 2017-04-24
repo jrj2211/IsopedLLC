@@ -51,23 +51,6 @@ public class SessionStats {
         }
     };
 
-    private Runnable mDeviceAngleRandom = new Runnable() {
-        @Override
-        public void run() {
-            // TODO: REMOVE THIS
-            mHandler.postDelayed(mDeviceAngleRandom, 2000);
-
-            Random r = new Random();
-            if (r.nextBoolean()) {
-                int angle = r.nextInt(45);
-                if (deviceAngle != null) {
-                    deviceAngle.setValue(angle);
-                }
-                ;
-            }
-        }
-    };
-
     private Runnable mCyclePace = new Runnable() {
         @Override
         public void run() {
@@ -91,7 +74,6 @@ public class SessionStats {
         mHandler = new Handler();
 
         // TODO: REMOVE THIS
-        mHandler.postDelayed(mDeviceAngleRandom, 2000);
         mHandler.postDelayed(mCyclePace, 2000);
 
         reset();
@@ -167,6 +149,10 @@ public class SessionStats {
         }
     }
 
+    public void setElevation(int elevation) {
+        deviceAngle.setValue(elevation);
+    }
+
     public void setSessionButton(Button button) {
         sessionButton = button;
 
@@ -219,13 +205,13 @@ public class SessionStats {
     private void updateButtons() {
         if (sessionButton != null) {
             if (curState == STATE.RUNNING) {
-                sessionButton.setText("PAUSE SESSION");
+                sessionButton.setText("STOP");
                 sessionButton.setBackgroundColor(ContextCompat.getColor(activity, R.color.resistance));
             } else if (curState == STATE.STOPPED) {
-                sessionButton.setText("START SESSION");
+                sessionButton.setText("START");
                 sessionButton.setBackgroundColor(ContextCompat.getColor(activity, R.color.assistance));
             } else if (curState == STATE.PAUSED) {
-                sessionButton.setText("RESUME SESSION");
+                sessionButton.setText("RESUME");
                 sessionButton.setBackgroundColor(ContextCompat.getColor(activity, R.color.assistance));
             }
         }
