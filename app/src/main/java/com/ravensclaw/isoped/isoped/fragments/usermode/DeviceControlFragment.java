@@ -327,6 +327,13 @@ public class DeviceControlFragment extends BaseFragment {
                 if(intent.getStringExtra(BluetoothLeService.CHARACTERISTIC).equals(getString(R.string.gatt_elevation_characteristic))) {
                     byte[] bytes = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
                     sessionStats.setElevation((int)bytes[0]);
+                } else if(intent.getStringExtra(BluetoothLeService.CHARACTERISTIC).equals(getString(R.string.gatt_motor_stride_counter_characteristic))) {
+                    sessionStats.setCycles(1, true);
+                }
+            } else if(BluetoothLeService.ACTION_DESCRIPTOR_WROTE.equals(action)) {
+                // Check if there are more characteristics that need to be subscribed to
+                if(mIsopedController.gattNotificationStackSize() > 0) {
+                    mIsopedController.registerNextGattNotification();
                 }
             }
         }
@@ -342,6 +349,7 @@ public class DeviceControlFragment extends BaseFragment {
         intentFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED);
         intentFilter.addAction(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
         intentFilter.addAction(BluetoothLeService.ACTION_DATA_AVAILABLE);
+        intentFilter.addAction(BluetoothLeService.ACTION_DESCRIPTOR_WROTE);
 
         getActivity().registerReceiver(mGattUpdateReceiver, intentFilter);
 

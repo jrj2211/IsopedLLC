@@ -10,5 +10,8 @@
 
     <string name='gatt_motor_service'>03376f81-d03b-12e2-9bb5-0103a6d6c61c</string>
     <string name='gatt_motor_control_characteristic'>04376f81-d03b-12e2-9bb5-0103a6d6c61c</string>
-    <string name='gatt_motor_stride_characteristic'>05376f81-d03b-12e2-9bb5-0103a6d6c61c</string>
+    <string name="gatt_motor_stride_control_characteristic">05376f81-d03b-12e2-9bb5-0103a6d6c61c</string>
+    <string name="gatt_motor_stride_counter_characteristic">06376f81-d03b-12e2-9bb5-0103a6d6c61c</string>
+
+    <string name='characteristic_update_notification_descriptor_uuid'>00002902-0000-1000-8000-00805f9b34fb</string>
 </resources>

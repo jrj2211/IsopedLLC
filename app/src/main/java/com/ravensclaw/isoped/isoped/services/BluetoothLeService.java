@@ -16,8 +16,11 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
+import com.ravensclaw.isoped.isoped.R;
+
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.StringTokenizer;
 import java.util.UUID;
 
 /**
@@ -57,11 +60,20 @@ public class BluetoothLeService extends Service
     public final static String ACTION_DATA_AVAILABLE =
             "ACTION_DATA_AVAILABLE";
 
+    public final static String ACTION_DESCRIPTOR_WROTE =
+            "ACTION_DESCRIPTOR_WROTE";
+
     public final static String EXTRA_DATA =
             "EXTRA_DATA";
 
     public final static String CHARACTERISTIC =
             "CHARACTERISTIC";
+
+    public final static String DESCRIPTOR =
+            "DESCRIPTOR";
+
+    public final static String DESCRIPTOR_STATUS =
+            "DESCRIPTOR_STATUS";
 
     // Implements callback methods for GATT events that the app cares about.  For example,
     // connection change and services discovered.
@@ -138,6 +150,12 @@ public class BluetoothLeService extends Service
             Log.i(TAG, "onCharacteristicChanged");
             broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
         }
+
+        @Override
+        public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
+            Log.i(TAG, "onDescriptorWrite");
+            broadcastUpdate(ACTION_DESCRIPTOR_WROTE, descriptor, status);
+        }
     };
 
     private void broadcastUpdate(final String action)
@@ -151,8 +169,6 @@ public class BluetoothLeService extends Service
     {
         final Intent intent = new Intent(action);
 
-        Log.i(TAG, "broadcastUpdate " + action);
-
         final byte[] data = characteristic.getValue();
 
         if (data != null && data.length > 0)
@@ -160,6 +176,17 @@ public class BluetoothLeService extends Service
             intent.putExtra(EXTRA_DATA, data);
             intent.putExtra(CHARACTERISTIC, characteristic.getUuid().toString());
         }
+        sendBroadcast(intent);
+    }
+
+    private void broadcastUpdate(final String action,
+                                 final BluetoothGattDescriptor descriptor,
+                                 final int status)
+    {
+        final Intent intent = new Intent(action);
+        intent.putExtra(DESCRIPTOR, descriptor.getUuid().toString());
+        intent.putExtra(DESCRIPTOR_STATUS, status);
+
         sendBroadcast(intent);
     }
 
@@ -329,6 +356,32 @@ public class BluetoothLeService extends Service
             return;
         }
         mBluetoothGatt.writeCharacteristic(characteristic);
+    }
+
+    /**
+     * Enables or disables notification on a give characteristic.
+     *
+     * @param characteristic Characteristic to act on.
+     * @param enabled        If true, enable notification.  False otherwise.
+     */
+    public void setCharacteristicNotification(BluetoothGattCharacteristic characteristic,
+                                              boolean enabled)
+    {
+        if (mBluetoothAdapter == null || mBluetoothGatt == null)
+        {
+            Log.w(TAG, "BluetoothAdapter not initialized");
+            return;
+        }
+
+        // Check if characteristic is a notify property
+        if((characteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_NOTIFY) == BluetoothGattCharacteristic.PROPERTY_NOTIFY) {
+            mBluetoothGatt.setCharacteristicNotification(characteristic, enabled);
+            BluetoothGattDescriptor descriptor = characteristic.getDescriptor(UUID.fromString(getBaseContext().getString(R.string.characteristic_update_notification_descriptor_uuid)));
+            descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+            mBluetoothGatt.writeDescriptor(descriptor);
+        } else {
+            Log.e(TAG, "Provided characteristic is not NOTIFY - " + characteristic.getUuid().toString());
+        }
     }
 
     /**

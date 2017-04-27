@@ -32,50 +32,21 @@ public class SessionStats {
     private DeviceInfoRow deviceAngle;
     private DeviceInfoRow cyclePace;
 
-    private Runnable mRunnable = new Runnable() {
+    private Runnable mTimerRunnable = new Runnable() {
         @Override
         public void run() {
             if (curState == STATE.RUNNING) {
-                mHandler.postDelayed(mRunnable, delay);
+                mHandler.postDelayed(mTimerRunnable, delay);
 
                 // Update SessionStats
                 setTime(curTime + delay);
-
-                if (curTime % 1000 == 0) {
-                    Random r = new Random();
-                    if (r.nextBoolean()) {
-                        setCycles(1, true);
-                    }
-                }
             }
         }
     };
-
-    private Runnable mCyclePace = new Runnable() {
-        @Override
-        public void run() {
-            // TODO: REMOVE THIS
-            mHandler.postDelayed(mCyclePace, 2000);
-
-            Random r = new Random();
-            if (r.nextBoolean()) {
-                int angle = r.nextInt(20);
-                if (cyclePace != null) {
-                    cyclePace.setValue(angle);
-                }
-                ;
-            }
-        }
-    };
-
 
     public SessionStats(Activity a) {
         activity = a;
         mHandler = new Handler();
-
-        // TODO: REMOVE THIS
-        mHandler.postDelayed(mCyclePace, 2000);
-
         reset();
     }
 
@@ -101,7 +72,7 @@ public class SessionStats {
 
     public void start() {
         if (curState != STATE.RUNNING) {
-            mHandler.postDelayed(mRunnable, delay);
+            mHandler.postDelayed(mTimerRunnable, delay);
             curState = STATE.RUNNING;
         }
         updateButtons();
