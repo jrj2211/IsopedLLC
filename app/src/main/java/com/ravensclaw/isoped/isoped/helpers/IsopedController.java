@@ -112,8 +112,16 @@ public class IsopedController {
         mBluetoothLeService.writeCharacteristic(mStrideControlCharacteristic);
     }
 
+    public void readStrideLength() {
+        mBluetoothLeService.readCharacteristic(mStrideControlCharacteristic);
+    }
+
     public void getElevationAngle() {
         mBluetoothLeService.readCharacteristic(mElevationCharacteristic);
+    }
+
+    public boolean isStrideCharacteristic(BluetoothGattCharacteristic characteristic) {
+        return characteristic.getUuid().toString().equals(mContext.getString(R.string.gatt_motor_stride_control_characteristic));
     }
 
 }

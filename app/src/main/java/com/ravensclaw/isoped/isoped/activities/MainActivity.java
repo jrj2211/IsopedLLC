@@ -65,7 +65,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy()
     {
-        Log.e(TAG, "Destroyed!");
         super.onDestroy();
         unbindService(mServiceConnection);
         mBluetoothLeService = null;
@@ -154,7 +153,6 @@ public class MainActivity extends AppCompatActivity {
 
     public void connectToGatt(BluetoothDevice device) {
         // Connect to the device
-        Log.e(TAG, device.getAddress());
         mBluetoothLeService.connect(device.getAddress());
     }
 }

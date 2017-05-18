@@ -181,10 +181,6 @@ public abstract class BaseFragment extends Fragment {
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
         menu.clear();
-
-        if (settings.isType(AppSettings.TYPES.PROFESSIONAL) && pinnedMode() && false == isAppInLockTaskMode()) {
-            inflater.inflate(R.menu.pin_menu, menu);
-        }
     }
 
     @Override

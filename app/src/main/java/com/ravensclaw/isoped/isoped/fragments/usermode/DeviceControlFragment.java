@@ -35,7 +35,10 @@ import com.ravensclaw.isoped.isoped.helpers.IsopedController;
 import com.ravensclaw.isoped.isoped.helpers.SessionStats;
 import com.ravensclaw.isoped.isoped.services.BluetoothLeService;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by CAD Station on 12/21/2016.
@@ -45,12 +48,22 @@ public class DeviceControlFragment extends BaseFragment {
 
     private final static String TAG = DeviceControlFragment.class.getSimpleName();
 
+    private enum DEVICE_INFO {
+        ASSISTANCE_LEVEL,
+        RESISTANCE_LEVEL,
+        STRIDE_LENGTH,
+        DEVICE_ANGLE,
+        AVG_CYCLE_PACE,
+
+    }
+
     private Button modeResistance;
     private Button modeAssistance;
     private User user = null;
     private String title = "ISOPED";
     private LayoutInflater inflater;
     private SessionStats sessionStats;
+    private Map<DEVICE_INFO, DeviceInfoRow> mDeviceInfoRows = new HashMap<>();
     private Bluetooth mBluetooth;
     private IsopedController mIsopedController;
     private ScanBluetoothDialog mBtScanDialog;
@@ -198,16 +211,17 @@ public class DeviceControlFragment extends BaseFragment {
             modeResistance.setTextColor(ContextCompat.getColor(getActivity(), R.color.darkGray));
             modeResistance.setBackgroundResource(0);
 
-            final DeviceInfoRow moveSpeed = new DeviceInfoRow(stats, inflater).setLabel("Move Speed").setIcon(R.drawable.ic_speed_gray46).setUnits(" / 10");
+            final DeviceInfoRow moveSpeed = new DeviceInfoRow(stats, inflater).setLabel("Assistance Level").setIcon(R.drawable.ic_speed_gray46).setUnits(" %");
             moveSpeed.setOnClick(new CustomCallback(getActivity()) {
                 @Override
                 public void run() {
-                    NumberPickerDialog dialog = new NumberPickerDialog(getActivity(), "Move Speed", moveSpeed.getValue()).setMax(10).setMin(0);
+                    NumberPickerDialog dialog = new NumberPickerDialog(getActivity(), "Assistance Level", moveSpeed.getValue()).setMax(100).setMin(0);
                     dialog.show();
 
                     dialog.setOnChange(new NumberPickerDialog.OnChangeListener() {
                         @Override
                         public void onValueChange(int value) {
+                            value = value / 10; // Convert from percentage to what the isoped device expects
                             moveSpeed.setValue(value);
                             if(mIsopedController != null) {
                                 mIsopedController.setAssistanceLevel(value);
@@ -217,16 +231,17 @@ public class DeviceControlFragment extends BaseFragment {
                 }
             });
 
-            final DeviceInfoRow strideLength = new DeviceInfoRow(stats, inflater).setLabel("Stride Length").setIcon(R.drawable.ic_ruler_gray46).setUnits(" inch");
+            final DeviceInfoRow strideLength = new DeviceInfoRow(stats, inflater).setLabel("Stride Length").setIcon(R.drawable.ic_ruler_gray46).setUnits(" %");
             strideLength.setOnClick(new CustomCallback(getActivity()) {
                 @Override
                 public void run() {
-                    NumberPickerDialog dialog = new NumberPickerDialog(getActivity(), "Stride Length", strideLength.getValue()).setMax(10).setMin(0).setUnits("inches");
+                    NumberPickerDialog dialog = new NumberPickerDialog(getActivity(), "Stride Length", strideLength.getValue()).setMax(100).setMin(10);
                     dialog.show();
 
                     dialog.setOnChange(new NumberPickerDialog.OnChangeListener() {
                         @Override
                         public void onValueChange(int value) {
+                            value = value / 10; // Convert from percentage to what the isoped device expects
                             strideLength.setValue(value);
                             if(mIsopedController != null) {
                                 mIsopedController.setStrideLength(value);
@@ -329,6 +344,8 @@ public class DeviceControlFragment extends BaseFragment {
                     sessionStats.setElevation((int)bytes[0]);
                 } else if(intent.getStringExtra(BluetoothLeService.CHARACTERISTIC).equals(getString(R.string.gatt_motor_stride_counter_characteristic))) {
                     sessionStats.setCycles(1, true);
+                } else if(intent.getStringExtra(BluetoothLeService.CHARACTERISTIC).equals(getString(R.string.gatt_motor_stride_control_characteristic))) {
+                    sessionStats.setCycles(1, true);
                 }
             } else if(BluetoothLeService.ACTION_DESCRIPTOR_WROTE.equals(action)) {
                 // Check if there are more characteristics that need to be subscribed to
@@ -352,6 +369,8 @@ public class DeviceControlFragment extends BaseFragment {
         intentFilter.addAction(BluetoothLeService.ACTION_DESCRIPTOR_WROTE);
 
         getActivity().registerReceiver(mGattUpdateReceiver, intentFilter);
+
+        mIsopedController.readStrideLength();
 
         setRequestScreen();
     }
